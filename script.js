@@ -1,10 +1,5 @@
-const body = document.body;
 const menuToggle = document.getElementById("menuToggle");
 const mainNav = document.getElementById("mainNav");
-const header = document.querySelector(".header");
-const themeToggle = document.getElementById("themeToggle");
-const themeToggleIcon = document.querySelector(".theme-toggle__icon");
-const themeToggleLabel = document.querySelector(".theme-toggle__label");
 const addButtons = document.querySelectorAll(".add-to-list");
 const cartItems = document.getElementById("cartItems");
 const cartTotal = document.getElementById("cartTotal");
@@ -14,35 +9,9 @@ const finishOrder = document.getElementById("finishOrder");
 const cartToggle = document.getElementById("cartToggle");
 const cartPanel = document.getElementById("cartPanel");
 const contactForm = document.querySelector(".contact-form");
-const filterChips = document.querySelectorAll(".filter-chip");
-const offerCards = document.querySelectorAll(".offer-card");
-const toast = document.getElementById("toast");
-const backToTop = document.getElementById("backToTop");
-const currentYear = document.getElementById("currentYear");
 
 const cart = [];
 const whatsappBase = "https://wa.me/551736312288?text=";
-const savedTheme = localStorage.getItem("guirao-theme");
-
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add("is-visible");
-  window.clearTimeout(showToast.timeoutId);
-  showToast.timeoutId = window.setTimeout(() => {
-    toast.classList.remove("is-visible");
-  }, 2200);
-}
-
-function applyTheme(theme) {
-  body.dataset.theme = theme;
-  const isDark = theme === "dark";
-  themeToggle?.setAttribute("aria-pressed", String(isDark));
-
-  if (themeToggleIcon) themeToggleIcon.textContent = isDark ? "☀️" : "🌙";
-  if (themeToggleLabel) {
-    themeToggleLabel.textContent = isDark ? "Modo claro" : "Modo escuro";
-  }
-}
 
 function currencyToNumber(value) {
   return Number.parseFloat(value.replace(".", "").replace(",", ".")) || 0;
@@ -87,7 +56,8 @@ function renderCart() {
   cartTotal.textContent = formatCurrency(total);
 
   if (!cart.length) {
-    cartItems.innerHTML = '<li class="cart__empty">Nenhum item adicionado ainda.</li>';
+    cartItems.innerHTML =
+      '<li class="cart__empty">Nenhum item adicionado ainda.</li>';
     updateWhatsAppLink();
     return;
   }
@@ -119,8 +89,6 @@ function addToCart(name, price) {
   }
 
   renderCart();
-  cartPanel?.classList.add("is-open");
-  showToast(`${name} adicionado à sua lista.`);
 }
 
 function removeFromCart(name) {
@@ -136,41 +104,16 @@ function removeFromCart(name) {
   renderCart();
 }
 
-function setMenuState(isOpen) {
-  mainNav?.classList.toggle("is-open", isOpen);
-  menuToggle?.classList.toggle("is-open", isOpen);
-  menuToggle?.setAttribute("aria-expanded", String(isOpen));
-  body.classList.toggle("nav-open", isOpen);
-}
-
-function filterOffers(category) {
-  offerCards.forEach((card) => {
-    const shouldShow = category === "all" || card.dataset.category === category;
-    card.classList.toggle("is-hidden", !shouldShow);
-  });
-}
-
-if (savedTheme === "dark" || savedTheme === "light") {
-  applyTheme(savedTheme);
-} else {
-  applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-}
-
-currentYear.textContent = new Date().getFullYear();
-
 menuToggle?.addEventListener("click", () => {
-  const isOpen = !mainNav.classList.contains("is-open");
-  setMenuState(isOpen);
+  const isOpen = mainNav.classList.toggle("is-open");
+  menuToggle.setAttribute("aria-expanded", String(isOpen));
 });
 
 mainNav?.querySelectorAll("a").forEach((link) => {
-  link.addEventListener("click", () => setMenuState(false));
-});
-
-themeToggle?.addEventListener("click", () => {
-  const nextTheme = body.dataset.theme === "dark" ? "light" : "dark";
-  applyTheme(nextTheme);
-  localStorage.setItem("guirao-theme", nextTheme);
+  link.addEventListener("click", () => {
+    mainNav.classList.remove("is-open");
+    menuToggle?.setAttribute("aria-expanded", "false");
+  });
 });
 
 addButtons.forEach((button) => {
@@ -178,19 +121,14 @@ addButtons.forEach((button) => {
     const card = event.currentTarget.closest(".offer-card");
     const { product, price } = card.dataset;
     addToCart(product, currencyToNumber(price));
-
-    const originalText = button.textContent;
     button.textContent = "Adicionado!";
-    button.disabled = true;
-
-    window.setTimeout(() => {
-      button.textContent = originalText;
-      button.disabled = false;
-    }, 1100);
+    setTimeout(() => {
+      button.textContent = "Adicionar à lista";
+    }, 1200);
   });
 });
 
-cartItems?.addEventListener("click", (event) => {
+cartItems.addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove]");
   if (!button) return;
   removeFromCart(button.dataset.remove);
@@ -199,7 +137,6 @@ cartItems?.addEventListener("click", (event) => {
 clearCartButton?.addEventListener("click", () => {
   cart.length = 0;
   renderCart();
-  showToast("Sua lista foi limpa.");
 });
 
 cartToggle?.addEventListener("click", () => {
@@ -213,30 +150,12 @@ contactForm?.addEventListener("submit", (event) => {
 
   button.textContent = "Mensagem enviada!";
   button.disabled = true;
-  showToast("Mensagem enviada com sucesso.");
 
-  window.setTimeout(() => {
+  setTimeout(() => {
     button.textContent = originalText;
     button.disabled = false;
     contactForm.reset();
   }, 1800);
-});
-
-filterChips.forEach((chip) => {
-  chip.addEventListener("click", () => {
-    filterChips.forEach((item) => item.classList.remove("is-active"));
-    chip.classList.add("is-active");
-    filterOffers(chip.dataset.filter);
-  });
-});
-
-backToTop?.addEventListener("click", () => {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-window.addEventListener("scroll", () => {
-  header?.classList.toggle("is-scrolled", window.scrollY > 10);
-  backToTop?.classList.toggle("is-visible", window.scrollY > 600);
 });
 
 const observer = new IntersectionObserver(
@@ -250,7 +169,13 @@ const observer = new IntersectionObserver(
   { threshold: 0.12 }
 );
 
-document.querySelectorAll(".reveal-up").forEach((element) => observer.observe(element));
+document
+  .querySelectorAll(
+    ".feature-card, .category-card, .offer-card, .info-card, .testimonial-card, .about__stats article"
+  )
+  .forEach((element) => {
+    element.classList.add("reveal");
+    observer.observe(element);
+  });
 
 renderCart();
-filterOffers("all");
